@@ -1,0 +1,18 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@layer utilities{
+    .bg-yellow-100{
+        color: #FCDC94;
+
+    }
+}
+
+@layer components{
+    .a_sidebar{
+        @apply flex items-center p-2 text-gray-900 rounded-lg hover:bg-orange-200
+    }
+    .span_sidebar{
+        @apply flex-1 ms-3 whitespace-nowrap
+    }
+}
