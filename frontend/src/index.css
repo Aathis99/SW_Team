@@ -3,8 +3,7 @@
 
 @layer utilities{
     .bg-yellow-100{
-        color: #FCDC94;
-
+        background-color: #FCDC94;
     }
 }
 
