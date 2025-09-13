@@ -5,7 +5,7 @@ function ManageSubject() {
     <main className="ml-64 mt-12 p-6 bg-orange-100 min-h-screen">
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold">จัดการรายวิชา</h2>
+          <h2 className="text-lg font-bold text-black">จัดการรายวิชา</h2>
           <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
             เพิ่มรายวิชา
           </button>
@@ -22,7 +22,7 @@ function ManageSubject() {
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b">
+              <tr className="border-b text-black">
                 <td className="px-4 py-2">5674891</td>
                 <td className="px-4 py-2">ตัวอย่างรายวิชาเพื่อทดสอบการแสดงผล</td>
                 <td className="px-4 py-2">1 (45)</td>
