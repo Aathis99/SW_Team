@@ -41,19 +41,71 @@ app.get("/health", async (req, res) => {
   }
 });
 
-app.get("/test-db", async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT 1");
-    res.json({ ok: true, result: rows });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: err.message });
-  }
-});
 
 app.get("/subject", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM subject");
     res.json(rows);
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/subject", async (req, res) => {
+  try {
+    const { subj_id, subj_name, subj_credit, subj_hours } = req.body || {};
+
+    // Basic validation
+    if (
+      !subj_id ||
+      !subj_name ||
+      subj_credit === undefined ||
+      subj_hours === undefined ||
+      String(subj_id).trim() === "" ||
+      String(subj_name).trim() === ""
+    ) {
+      return res
+        .status(400)
+        .json({ ok: false, error: "Missing required fields" });
+    }
+
+    const creditNum = Number(subj_credit);
+    const hoursNum = Number(subj_hours);
+    if (!Number.isFinite(creditNum) || !Number.isFinite(hoursNum)) {
+      return res
+        .status(400)
+        .json({ ok: false, error: "subj_credit and subj_hours must be numbers" });
+    }
+
+    const [result] = await pool.query(
+      "INSERT INTO subject (subj_id, subj_name, subj_credit, subj_hours) VALUES (?, ?, ?, ?)",
+      [subj_id, subj_name, creditNum, hoursNum]
+    );
+
+    res.status(201).json({
+      ok: true,
+      id: result.insertId,
+      subj_id,
+      subj_name,
+      subj_credit: creditNum,
+      subj_hours: hoursNum,
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.delete("/subject/:subj_id", async (req, res) => {
+  try {
+    const subjId = Number(req.params.subj_id);
+    if (!Number.isFinite(subjId)) {
+      return res.status(400).json({ ok: false, error: "Invalid subj_id" });
+    }
+    const [result] = await pool.query("DELETE FROM subject WHERE subj_id = ?", [subjId]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ ok: false, error: "Subject not found" });
+    }
+    res.json({ ok: true, subj_id: subjId });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
