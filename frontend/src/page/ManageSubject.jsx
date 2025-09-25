@@ -98,7 +98,7 @@ function ManageSubject() {
 
   return (
     <>
-      <main className="ml-64 mt-12 p-6 bg-orange-100 min-h-screen">
+      <main className="ml-64 mt-12 p-6 bg-orange-100 min-h-screen ">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-black">จัดการรายวิชา</h2>
@@ -112,7 +112,7 @@ function ManageSubject() {
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse">
               <thead>
-                <tr className="bg-orange-200 text-left ">
+                <tr className="bg-orange-200 text-center rounded-lg">
                   <th className="px-4 py-2">รหัสวิชา</th>
                   <th className="px-4 py-2">ชื่อรายวิชา</th>
                   <th className="px-4 py-2">หน่วยกิต</th>
@@ -120,7 +120,7 @@ function ManageSubject() {
                   <th className="px-4 py-2">การจัดการ</th>
                 </tr>
               </thead>
-              <tbody className="text-black">
+              <tbody className="text-black text-center">
                 {subjects.map((sub) => (
                   <tr className="p-1.5" key={sub.subj_id}>
                     <td>{sub.subj_id}</td>
@@ -142,7 +142,7 @@ function ManageSubject() {
           </div>
         </div>
       </main>
-
+      {/* ส่วน เพิ่มรายวิชา */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg w-96 shadow-lg">
@@ -159,7 +159,7 @@ function ManageSubject() {
                   value={form.subj_id}
                   onChange={handleChange}
                   className={`w-full p-2 border rounded ${errors.subj_id ? "border-red-500" : ""}`}
-                  placeholder="เช่น CS101"
+                  placeholder="เพิ่มรหัสรายวิชา เช่น 5674501"
                 />
                 {errors.subj_id && (
                   <p className="text-red-600 text-xs mt-1">{errors.subj_id}</p>
@@ -172,7 +172,7 @@ function ManageSubject() {
                   value={form.subj_name}
                   onChange={handleChange}
                   className={`w-full p-2 border rounded ${errors.subj_name ? "border-red-500" : ""}`}
-                  placeholder="เช่น โครงสร้างข้อมูล"
+                  placeholder="กรอก ชื่อวิชา"
                 />
                 {errors.subj_name && (
                   <p className="text-red-600 text-xs mt-1">{errors.subj_name}</p>
@@ -185,7 +185,7 @@ function ManageSubject() {
                   value={form.subj_credit}
                   onChange={handleChange}
                   className={`w-full p-2 border rounded ${errors.subj_credit ? "border-red-500" : ""}`}
-                  placeholder="เช่น 3"
+                  placeholder="..."
                 />
                 {errors.subj_credit && (
                   <p className="text-red-600 text-xs mt-1">{errors.subj_credit}</p>
@@ -198,7 +198,7 @@ function ManageSubject() {
                   value={form.subj_hours}
                   onChange={handleChange}
                   className={`w-full p-2 border rounded ${errors.subj_hours ? "border-red-500" : ""}`}
-                  placeholder="เช่น 3"
+                  placeholder="..."
                 />
                 {errors.subj_hours && (
                   <p className="text-red-600 text-xs mt-1">{errors.subj_hours}</p>

@@ -12,11 +12,17 @@ function Sidebar({ onMenuClick }) {
         <h2 className="text-lg font-bold mb-4 px-2">งาน Admin</h2>
 
         <ul className="space-y-2 font-medium">
+
           <li>
-            <a href="#" className="a_sidebar group">
-              <span className="span_sidebar">จัดการห้องเรียน</span>
-            </a>
+            <button
+              type="button"
+              onClick={() => onMenuClick && onMenuClick('roommanage')}
+              className="a_sidebar w-full text-left"
+            >
+              <span className="span_sidebar">จัดการรายห้องเรียน</span>
+            </button>
           </li>
+
           <li>
             <button
               type="button"
@@ -26,26 +32,47 @@ function Sidebar({ onMenuClick }) {
               <span className="span_sidebar">จัดการรายวิชา</span>
             </button>
           </li>
+
           <li>
-            <a href="#" className="a_sidebar group">
-              <span className="span_sidebar">จัดการตารางสอน</span>
-            </a>
+            <button
+              type="button"
+              onClick={() => onMenuClick && onMenuClick('Schedulemanage')}
+              className="a_sidebar w-full text-left"
+            >
+              <span className="span_sidebar">จัดการตรางสอน</span>
+            </button>
           </li>
+
           <li>
-            <a href="#" className="a_sidebar group">
+            <button
+              type="button"
+              onClick={() => onMenuClick && onMenuClick('Roomuse')}
+              className="a_sidebar w-full text-left"
+            >
               <span className="span_sidebar">จัดการใช้ห้องเรียน</span>
-            </a>
+            </button>
           </li>
+
           <li>
-            <a href="#" className="a_sidebar group">
+            <button
+              type="button"
+              onClick={() => onMenuClick && onMenuClick('Roombooking')}
+              className="a_sidebar w-full text-left"
+            >
               <span className="span_sidebar">จัดการจองห้อง</span>
-            </a>
+            </button>
           </li>
+
           <li>
-            <a href="#" className="a_sidebar group">
+            <button
+              type="button"
+              onClick={() => onMenuClick && onMenuClick('Report')}
+              className="a_sidebar w-full text-left"
+            >
               <span className="span_sidebar">ออกรายงาน</span>
-            </a>
+            </button>
           </li>
+
         </ul>
       </div>
     </aside>

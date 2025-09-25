@@ -1,17 +1,26 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-@layer utilities{
-    .bg-yellow-100{
+@layer utilities {
+    .bg-yellow-100 {
         background-color: #FCDC94;
+    }
+
+    .table-zebra tbody tr:nth-child(odd) {
+        background-color: white !important;
+    }
+
+    .table-zebra tbody tr:nth-child(even) {
+        background-color: gray!important;
     }
 }
 
-@layer components{
-    .a_sidebar{
+@layer components {
+    .a_sidebar {
         @apply flex items-center p-2 text-gray-900 rounded-lg hover:bg-orange-200
     }
-    .span_sidebar{
+
+    .span_sidebar {
         @apply flex-1 ms-3 whitespace-nowrap
     }
 }
