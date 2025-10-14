@@ -1,123 +1,161 @@
-// import React from "react";
-
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 /**
  * Room Availability Page – React + TailwindCSS + DaisyUI
- *
- * Notes:
- * - This component is self‑contained. Drop it into a Vite/CRA app configured with Tailwind + DaisyUI.
- * - Colors follow the mock: teaching (blue), reserved (rose), free (white).
- * - Replace MOCK_DATA with real API results when ready.
+ * Pulls data from backend tables: rooms, tb_schedule
  */
 
-// ===== Mock data =====
-const ROOMS = [
-  { id: "39401", label: "อ่องออ1" },
-  { id: "39402", label: "อ่องออ2" },
-  { id: "39403", label: "อ่องออ3" },
-  { id: "39404", label: "อ่องออ4" },
-]
-const TERMS = [
-  { id: "1/2568", label: "เทอม1/2568" },
-  { id: "2/2568", label: "เทอม2/2568" },
-];
+// API base URL (configurable via Vite env)
+const API_BASE = import.meta?.env?.VITE_API_BASE_URL ?? "http://localhost:3000";
 
-// A single booking block
-// type: "teaching" | "reserved"
-const MOCK_DATA = [
-  {
-    room: "39401",
-    date: "2025-09-22",
-    start: "13:00",
-    end: "16:00",
-    type: "teaching",
-    subject: "ซอฟต์แวร์เป็นทีม",
-  },
-  {
-    room: "39403",
-    date: "2025-09-24",
-    start: "13:00",
-    end: "14:00",
-    type: "reserved",
-    subject: "สอบกลางภาค",
-  },
-  {
-    room: "39403",
-    date: "2025-09-24",
-    start: "09:00",
-    end: "12:00",
-    type: "teaching",
-    subject: "เตรียมสหกิจ",
-  },
-  {
-    room: "39404",
-    date: "2025-09-24",
-    start: "09:00",
-    end: "12:00",
-    type: "teaching",
-    subject: "Porject Software",
-  },
-];
+// Terms (sample)
+// const TERMS = [
+//   { id: "1/2568", label: "1/2568" },
+//   { id: "2/2568", label: "2/2568" },
+// ];
 
-// ===== Helpers =====
+// Helpers
 const timeToNumber = (t) =>
-  parseInt(t.slice(0, 2), 10) + (t.slice(3) === "30" ? 0.5 : 0);
+  parseInt(String(t).slice(0, 2), 10) + (String(t).slice(3) === "30" ? 0.5 : 0);
+const HOURS = Array.from({ length: 10 }, (_, i) => 8 + i); // 08 -> 17
 
-const HOURS = Array.from({ length: 10 }, (_, i) => 8 + i); // 08 -> 17 (ending 18:00 column label)
-
-// Map booking blocks to hourly buckets for quick lookup
 function buildHourMap(blocks) {
   const map = new Map();
   for (const b of blocks) {
     const s = timeToNumber(b.start);
     const e = timeToNumber(b.end);
-    for (let h = s; h < e; h += 1) {
-      map.set(h, b);
-    }
+    for (let h = s; h < e; h += 1) map.set(h, b);
   }
   return map;
 }
 
 export default function Roomuse() {
   // Filters
-  const [term, setTerm] = useState(TERMS[0].id);
-  const [date, setDate] = useState("2025-09-24");
+  const [term, setTerm] = useState("");
+  const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [room, setRoom] = useState("");
   const [subject, setSubject] = useState("");
 
-  const [results, setResults] = useState(MOCK_DATA);
+  // Data
+  const [rooms, setRooms] = useState([]);
+  const [schedules, setSchedules] = useState([]); // from tb_schedule
+  const [results, setResults] = useState([]); // filtered
+
+  // Load rooms and schedules
+  useEffect(() => {
+    const loadRooms = async () => {
+      try {
+        const r = await fetch(`${API_BASE}/tb_room`);
+    const r = await fetch(`${API_BASE}/rooms`);
+apped = Array.isArray(data)
+          ? data.map((x) => ({
+              id: String(x.room_id ?? x.id ?? x.room ?? ""),
+              label: x.label ?? String(x.room_name ?? x.room_id ?? x.id ?? ""),
+            }))
+          : [];
+        setRooms(mapped);
+      } catch {
+        setRooms([]);
+      }
+    };
+
+    const loadSchedules = async () => {
+      try {
+        // Expect: GET /tb_schedule returns rows with columns like:
+        // room_id, schedule_date (or date), start_time, end_time, subject, term, type
+          const r = await fetch(`${API_BASE}/tb_schedule`);       const data = await r.json();
+        const mapped = Array.isArray(data)
+          ? data
+              .map((b) => ({
+                  room: String(b.room ?? b.room_id ?? b.scd_room ?? ""),
+              backend จะส่ง day เป็น string (e.g. 'Monday') — เก็บไว้ที่ date เพื่อแสดง/กรองรายวัน
+  +           te: b.date ?? b.day ?? b.scd_day ?? "",
+  +           art: b.start ?? "",
+  +           d: b.end ?? "",               type: b.type ?? b.use_type ?? "teaching",
+                subject: b.subject ?? b.subj_name ?? b.course_name ?? "",
+                term: b.term ?? b.scd_term ?? b.semester ?? "",
+ 
+ ,
+         }))
+              .filter((x) => x.room && x.date && x.start && x.end)
+          : [];
+        setSchedules(mapped);
+        setResults(mapped);
+        const firstTerm = mapped.find((x) => x.term)?.term || "";
+        setTerm(firstTerm);
+      } catch {
+        setSchedules([]);
+        setResults([]);
+      }
+    };
+
+    loadRooms();
+    loadSchedules();
+  }, []);
 
   const filteredRooms = useMemo(
-    () => (room ? ROOMS.filter((r) => r.id === room) : ROOMS),
-    [room]
+    () => (room ? rooms.filter((r) => r.id === room) : rooms),
+    [room, rooms]
   );
 
-  const handleSearch = () => {
-    // In real use, call API with filters.
-    const next = MOCK_DATA.filter((b) => {
-      const byDate = !date || b.date === date;
-      const byRoom = !room || b.room === room;
-      const bySubject =
-        !subject || b.subject.toLowerCase().includes(subject.toLowerCase());
-      const byStart =
-        !startTime || timeToNumber(b.end) > timeToNumber(startTime);
-      const byEnd = !endTime || timeToNumber(b.start) < timeToNumber(endTime);
-      return byDate && byRoom && bySubject && byStart && byEnd;
+  const handleSearch = async () => {
+    // Prefer server-side filtering to match actual DB columns
+    const params = new URLSearchParams({
+      term: term || "",
+      date: date || "",
+      startTime: startTime || "",
+      endTime: endTime || "",
+      room: room || "",
+      subject: subject || "",
     });
-    setResults(next);
+    try {
+      const r = await fetch(`${API_BASE}/tb_schedule?` + params.toString());
+      const data = await r.json();
+      const mapped = Array.isArray(data)
+        ? data.map((b) => ({
+            room: String(b.room ?? b.room_id ?? b.roomId ?? ""),
+            date: b.date ?? b.schedule_date ?? "",
+            start: b.start ?? b.start_time ?? "",
+            end: b.end ?? b.end_time ?? "",
+            subject:
+              b.subject ??
+              [b.subj_id, b.subj_name].filter(Boolean).join(" ") ??
+              "",
+            type: b.type ?? b.use_type ?? "teaching",
+            term: b.term ?? b.semester ?? "",
+          }))
+        : [];
+      setResults(mapped.filter((x) => x.room && x.date && x.start && x.end));
+    } catch {
+      // Fallback to client-side filtering if server fails
+      const base = schedules;
+      const next = base.filter((b) => {
+        const byTerm = !term || !b.term || b.term === term;
+        const byDate = !date || b.date === date;
+        const byRoom = !room || b.room === room;
+        const bySubject =
+          !subject ||
+ 
+  ubject ?? "").toLowerCase().includes(subject.toLowerCase());
+        const byStart =
+ 
+  rtTime || timeToNumber(b.end) > timeToNumber(startTime);
+        const byEnd = !endTime || timeToNumber(b.start) < timeToNumber(endTime);
+        return byTerm && byDate && byRoom && bySubject && byStart && byEnd;
+      });
+      setResults(next);
+    }
   };
 
   const handleClear = () => {
-    setTerm(TERMS[0].id);
     setDate("");
     setStartTime("");
     setEndTime("");
     setRoom("");
     setSubject("");
-    setResults(MOCK_DATA);
+    setResults(schedules);
   };
 
   // Group results by room for the grid
@@ -126,7 +164,8 @@ export default function Roomuse() {
     for (const r of filteredRooms) byRoom.set(r.id, []);
     for (const b of results.filter(
       (b) =>
-        (!room ? true : b.room === room) && (!date ? true : b.date === date)
+ 
+  om ? true : b.room === room) && (!date ? true : b.date === date)
     )) {
       byRoom.get(b.room)?.push(b);
     }
@@ -140,7 +179,7 @@ export default function Roomuse() {
         <div className="w-full bg-gray-500 shadow-sm">
           <div className="container mx-auto px-4 py-6 text-black">
             <h1 className="text-xl md:text-2xl font-bold">
-              แสดงเวลาว่างห้องเรียน
+              ตารางการใช้ห้องเรียน
             </h1>
 
             <div className="mt-4 grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
@@ -149,17 +188,9 @@ export default function Roomuse() {
                 <div className="label">
                   <span className="label-text">เทอม</span>
                 </div>
-                <select
-                  className="select select-bordered w-full text-white"
-                  value={term}
-                  onChange={(e) => setTerm(e.target.value)}
-                >
-                  {TERMS.map((t) => (
-                    <option className="text-white" key={t.id} value={t.id}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="input input-bordered w-full text-white flex items-center h-12">
+                  <span className="text-white">{term || "-"}'/'pan>
+                </div>
               </label>
 
               {/* วันที่ */}
@@ -175,10 +206,10 @@ export default function Roomuse() {
                 />
               </label>
 
-              {/* เวลาเริ่ม */}
+              {/* เวลาเริ่มต้น */}
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text">เวลาเริ่ม (เรียน)</span>
+                  <span className="label-text">เวลาเริ่มต้น (Start)</span>
                 </div>
                 <input
                   type="time"
@@ -191,7 +222,7 @@ export default function Roomuse() {
               {/* เวลาสิ้นสุด */}
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text">เวลาสิ้นสุด (เรียน)</span>
+                  <span className="label-text">เวลาสิ้นสุด (End)</span>
                 </div>
                 <input
                   type="time"
@@ -211,8 +242,12 @@ export default function Roomuse() {
                   value={room}
                   onChange={(e) => setRoom(e.target.value)}
                 >
-                  <option className="text-white" value="">ทั้งหมด</option>
-                  {ROOMS.map((r) => (
+                  <option className="text-white" value="">
+ 
+ กห้อง
+ 
+ tion>
+                  {rooms.map((r) => (
                     <option className="text-white" key={r.id} value={r.id}>
                       {r.label}
                     </option>
@@ -227,7 +262,7 @@ export default function Roomuse() {
                 </div>
                 <input
                   type="text"
-                  placeholder="ค้นหาวิชา…"
+                  placeholder="พิมพ์เพื่อค้นหาชื่อวิชา"
                   className="input input-bordered text-white"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
@@ -237,16 +272,20 @@ export default function Roomuse() {
               {/* Actions */}
               <div className="md:col-span-6 flex gap-3 pt-1">
                 <button
-                  className="btn btn-success text-white"
-                  onClick={handleSearch}
-                >
-                  ค้นหา
+ 
+  sName="btn btn-success text-white"
+ 
+  ick={handleSearch}
+ 
+                 ค้นหา
                 </button>
                 <button
-                  className="btn btn-error text-white"
-                  onClick={handleClear}
-                >
-                  ล้าง
+ 
+  sName="btn btn-error text-white"
+ 
+  ick={handleClear}
+ 
+                 ล้างค่า
                 </button>
               </div>
             </div>
@@ -256,24 +295,26 @@ export default function Roomuse() {
         {/* Results */}
         <div className="container mx-auto px-4 py-6">
           <div className="bg-gray-500 rounded-2xl shadow p-4 md:p-6">
-            <h2 className="text-lg font-semibold mb-4">
-              แสดงเวลาว่างห้องเรียน
-            </h2>
+            <h2 className="text-lg font-semibold mb-4">ผลการค้นหา</h2>
 
             <div className="overflow-x-auto">
               {/* Header time columns */}
               <table className="table border">
                 <thead>
                   <tr>
-                    <th className="w-28 align-bottom">เวลา</th>
-                    {HOURS.map((h, idx) => (
+                    <th className="w-28 align-bottom">ห้อง</th>
+                    {HOURS.map((h) => (
                       <th key={h} className="min-w-36 text-center">
                         <div className="font-semibold">
-                          {String(h).padStart(2, "0")}:00-
-                        </div>
+ 
+ ing(h).padStart(2, "0")}:00-
+ 
+ v>
                         <div className="text-xs text-base-content/70">
-                          {String(h + 1).padStart(2, "0")}:00
-                        </div>
+ 
+ ing(h + 1).padStart(2, "0")}:00
+ 
+ v>
                       </th>
                     ))}
                   </tr>
@@ -290,24 +331,25 @@ export default function Roomuse() {
                           const status = b?.type || "free";
                           const base =
                             status === "teaching"
-                            // หากมีการสอนจะให้สีพื้นเป็นสีน้ำเงิน
                               ? "bg-blue-100 border-blue-200 text-black"
-                              // หากถูกจองจะให้สีพื้นเป็นสีชมพู
                               : status === "reserved"
                               ? "bg-rose-100 border-rose-200 text-black"
-                              // หากว่างจะให้สีพื้นเป็นสีขาว
                               : "bg-white border-base-300 text-base-content/70";
                           return (
                             <td
-                              key={h}
-                              className={`align-middle border ${base}`}
-                            >
-                              {b ? (
+ 
+ ={h}
+ 
+ ssName={`align-middle border ${base}`}
+ 
+                             {b ? (
                                 <div className="text-xs leading-tight">
                                   <div className="font-medium">{b.subject}</div>
                                   <div className="opacity-70">
-                                    {b.start}–{b.end}
-                                  </div>
+ 
+ tart}-{b.end}
+ 
+ v>
                                 </div>
                               ) : (
                                 <div className="text-xs opacity-50">ว่าง</div>
@@ -324,8 +366,8 @@ export default function Roomuse() {
 
             {/* Legend */}
             <div className="mt-5 flex flex-wrap gap-6 items-center">
-              <Legend colorClass="bg-blue-200" label="ตารางสอน" />
-              <Legend colorClass="bg-rose-200" label="ติดจอง" />
+              <Legend colorClass="bg-blue-200" label="สอน" />
+              <Legend colorClass="bg-rose-200" label="จอง" />
               <Legend colorClass="bg-white border" label="ว่าง" />
             </div>
           </div>
@@ -343,7 +385,4 @@ function Legend({ colorClass, label }) {
     </div>
   );
 }
-
-// export default Roomuse;
-
 
