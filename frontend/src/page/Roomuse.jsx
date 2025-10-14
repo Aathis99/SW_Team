@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 
 /**
- * Room Availability Page – React + TailwindCSS + DaisyUI
+ * Room Availability Page â€“ React + TailwindCSS + DaisyUI
  * Pulls data from backend tables: rooms, tb_schedule
  */
 
@@ -48,8 +48,8 @@ export default function Roomuse() {
     const loadRooms = async () => {
       try {
         const r = await fetch(`${API_BASE}/tb_room`);
-    const r = await fetch(`${API_BASE}/rooms`);
-apped = Array.isArray(data)
+        const data = await r.json();
+        const mapped = Array.isArray(data)
           ? data.map((x) => ({
               id: String(x.room_id ?? x.id ?? x.room ?? ""),
               label: x.label ?? String(x.room_name ?? x.room_id ?? x.id ?? ""),
@@ -65,20 +65,22 @@ apped = Array.isArray(data)
       try {
         // Expect: GET /tb_schedule returns rows with columns like:
         // room_id, schedule_date (or date), start_time, end_time, subject, term, type
-          const r = await fetch(`${API_BASE}/tb_schedule`);       const data = await r.json();
+        const r = await fetch(`${API_BASE}/tb_schedule`);
+        const data = await r.json();
         const mapped = Array.isArray(data)
           ? data
               .map((b) => ({
-                  room: String(b.room ?? b.room_id ?? b.scd_room ?? ""),
-              backend จะส่ง day เป็น string (e.g. 'Monday') — เก็บไว้ที่ date เพื่อแสดง/กรองรายวัน
-  +           te: b.date ?? b.day ?? b.scd_day ?? "",
-  +           art: b.start ?? "",
-  +           d: b.end ?? "",               type: b.type ?? b.use_type ?? "teaching",
+                room: String(b.room ?? b.room_id ?? b.scd_room ?? ""),
+                // backend จะส่ง day เป็น string (e.g. 'Monday') — เก็บไว้ที่ date เพื่อแสดง/กรองรายวัน
+                date: b.date ?? b.day ?? b.scd_day ?? "",
+                start: b.start ?? "",
+                end: b.end ?? "",
+                type: b.type ?? b.use_type ?? "teaching",
                 subject: b.subject ?? b.subj_name ?? b.course_name ?? "",
                 term: b.term ?? b.scd_term ?? b.semester ?? "",
- 
- ,
-         }))
+                subject: b.subject ?? b.subj_name ?? "",
+                term: b.term ?? b.scd_term ?? "",
+              }))
               .filter((x) => x.room && x.date && x.start && x.end)
           : [];
         setSchedules(mapped);
@@ -137,11 +139,9 @@ apped = Array.isArray(data)
         const byRoom = !room || b.room === room;
         const bySubject =
           !subject ||
- 
-  ubject ?? "").toLowerCase().includes(subject.toLowerCase());
+          (b.subject ?? "").toLowerCase().includes(subject.toLowerCase());
         const byStart =
- 
-  rtTime || timeToNumber(b.end) > timeToNumber(startTime);
+          !startTime || timeToNumber(b.end) > timeToNumber(startTime);
         const byEnd = !endTime || timeToNumber(b.start) < timeToNumber(endTime);
         return byTerm && byDate && byRoom && bySubject && byStart && byEnd;
       });
@@ -164,8 +164,7 @@ apped = Array.isArray(data)
     for (const r of filteredRooms) byRoom.set(r.id, []);
     for (const b of results.filter(
       (b) =>
- 
-  om ? true : b.room === room) && (!date ? true : b.date === date)
+        (!room ? true : b.room === room) && (!date ? true : b.date === date)
     )) {
       byRoom.get(b.room)?.push(b);
     }
@@ -189,7 +188,7 @@ apped = Array.isArray(data)
                   <span className="label-text">เทอม</span>
                 </div>
                 <div className="input input-bordered w-full text-white flex items-center h-12">
-                  <span className="text-white">{term || "-"}'/'pan>
+                  <span className="text-white">{term || "-"}</span>
                 </div>
               </label>
 
@@ -235,7 +234,7 @@ apped = Array.isArray(data)
               {/* ห้อง */}
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text">ห้อง (room)</span>
+                  <span className="label-text">ห้อง (Room)</span>
                 </div>
                 <select
                   className="select select-bordered text-white"
@@ -243,10 +242,8 @@ apped = Array.isArray(data)
                   onChange={(e) => setRoom(e.target.value)}
                 >
                   <option className="text-white" value="">
- 
- กห้อง
- 
- tion>
+                    เลือกห้อง
+                  </option>
                   {rooms.map((r) => (
                     <option className="text-white" key={r.id} value={r.id}>
                       {r.label}
@@ -272,20 +269,16 @@ apped = Array.isArray(data)
               {/* Actions */}
               <div className="md:col-span-6 flex gap-3 pt-1">
                 <button
- 
-  sName="btn btn-success text-white"
- 
-  ick={handleSearch}
- 
-                 ค้นหา
+                  className="btn btn-success text-white"
+                  onClick={handleSearch}
+                >
+                  ค้นหา
                 </button>
                 <button
- 
-  sName="btn btn-error text-white"
- 
-  ick={handleClear}
- 
-                 ล้างค่า
+                  className="btn btn-error text-white"
+                  onClick={handleClear}
+                >
+                  Reset
                 </button>
               </div>
             </div>
@@ -306,15 +299,11 @@ apped = Array.isArray(data)
                     {HOURS.map((h) => (
                       <th key={h} className="min-w-36 text-center">
                         <div className="font-semibold">
- 
- ing(h).padStart(2, "0")}:00-
- 
- v>
+                          {String(h).padStart(2, "0")}:00-
+                        </div>
                         <div className="text-xs text-base-content/70">
- 
- ing(h + 1).padStart(2, "0")}:00
- 
- v>
+                          {String(h + 1).padStart(2, "0")}:00
+                        </div>
                       </th>
                     ))}
                   </tr>
@@ -337,22 +326,20 @@ apped = Array.isArray(data)
                               : "bg-white border-base-300 text-base-content/70";
                           return (
                             <td
- 
- ={h}
- 
- ssName={`align-middle border ${base}`}
- 
-                             {b ? (
+                              key={h}
+                              className={`align-middle border ${base}`}
+                            >
+                              {b ? (
                                 <div className="text-xs leading-tight">
                                   <div className="font-medium">{b.subject}</div>
                                   <div className="opacity-70">
- 
- tart}-{b.end}
- 
- v>
+                                    {b.start}-{b.end}
+                                  </div>
                                 </div>
                               ) : (
-                                <div className="text-xs opacity-50">ว่าง</div>
+                                <div className="text-xs opacity-50">
+                                  à¸§à¹ˆà¸²à¸‡
+                                </div>
                               )}
                             </td>
                           );
@@ -385,4 +372,3 @@ function Legend({ colorClass, label }) {
     </div>
   );
 }
-

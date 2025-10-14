@@ -1,11 +1,13 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+
+/* สีธีมเหลือง */
 @layer utilities {
     .bg-yellow-100 {
         background-color: #FCDC94;
     }
-
+/* สีลายloopข้อมูล */
     .table-zebra tbody tr:nth-child(odd) {
         background-color: white !important;
     }
@@ -14,7 +16,7 @@
         background-color: gray!important;
     }
 }
-
+/* side ไม่จำเป็น */
 @layer components {
     .a_sidebar {
         @apply flex items-center p-2 text-gray-900 rounded-lg hover:bg-orange-200

@@ -8,7 +8,7 @@ function ManageSubject() {
     subj_id: "",
     subj_name: "",
     subj_credit: "",
-    subj_hours: "",
+    subj_hourse: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -20,7 +20,7 @@ function ManageSubject() {
 
   const fetchSubjects = useCallback(async () => {
     try {
-      const r = await fetch("http://localhost:3000/subject");
+      const r = await fetch("http://localhost:3000/tb_subject");
       const data = await r.json();
       setSubjects(Array.isArray(data) ? data : []);
     } catch {
@@ -43,14 +43,14 @@ function ManageSubject() {
     if (!form.subj_name.trim()) next.subj_name = "กรุณากรอกชื่อรายวิชา";
     if (form.subj_credit === "" || isNaN(Number(form.subj_credit)))
       next.subj_credit = "กรุณากรอกหน่วยกิตเป็นตัวเลข";
-    if (form.subj_hours === "" || isNaN(Number(form.subj_hours)))
-      next.subj_hours = "กรุณากรอกชั่วโมงเป็นตัวเลข";
+    if (form.subj_hourse === "" || isNaN(Number(form.subj_hourse)))
+      next.subj_hourse = "กรุณากรอกชั่วโมงเป็นตัวเลข";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
   const handleCancel = () => {
-    setForm({ subj_id: "", subj_name: "", subj_credit: "", subj_hours: "" });
+    setForm({ subj_id: "", subj_name: "", subj_credit: "", subj_hourse: "" });
     setErrors({});
     closeModal();
   };
@@ -65,7 +65,7 @@ function ManageSubject() {
           subj_id: form.subj_id.trim(),
           subj_name: form.subj_name.trim(),
           subj_credit: Number(form.subj_credit),
-          subj_hours: Number(form.subj_hours),
+          subj_hourse: Number(form.subj_hourse),
         }),
       });
       const data = await res.json();
@@ -73,7 +73,7 @@ function ManageSubject() {
 
       await fetchSubjects();
 
-      setForm({ subj_id: "", subj_name: "", subj_credit: "", subj_hours: "" });
+      setForm({ subj_id: "", subj_name: "", subj_credit: "", subj_hourse: "" });
       setErrors({});
       closeModal();
     } catch (err) {
@@ -126,7 +126,7 @@ function ManageSubject() {
                     <td>{sub.subj_id}</td>
                     <td>{sub.subj_name}</td>
                     <td>{sub.subj_credit}</td>
-                    <td>({sub.subj_hours} ชม.)</td>
+                    <td>({sub.subj_hoursee} ชม.)</td>
                     <td>
                       <button
                         onClick={() => handleDelete(sub.subj_id)}
@@ -194,14 +194,14 @@ function ManageSubject() {
               <div>
                 <label className="block text-sm">ชั่วโมง</label>
                 <input
-                  name="subj_hours"
-                  value={form.subj_hours}
+                  name="subj_hourse"
+                  value={form.subj_hourse}
                   onChange={handleChange}
-                  className={`w-full p-2 border rounded ${errors.subj_hours ? "border-red-500" : ""}`}
+                  className={`w-full p-2 border rounded ${errors.subj_hourse ? "border-red-500" : ""}`}
                   placeholder="..."
                 />
-                {errors.subj_hours && (
-                  <p className="text-red-600 text-xs mt-1">{errors.subj_hours}</p>
+                {errors.subj_hourse && (
+                  <p className="text-red-600 text-xs mt-1">{errors.subj_hourse}</p>
                 )}
               </div>
             </div>
