@@ -15,8 +15,56 @@ const API_BASE = import.meta?.env?.VITE_API_BASE_URL ?? "http://localhost:3000";
 // ];
 
 // Helpers
-const timeToNumber = (t) =>
-  parseInt(String(t).slice(0, 2), 10) + (String(t).slice(3) === "30" ? 0.5 : 0);
+const DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+const isoDateToENday = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return DAYS[d.getDay()];
+};
+const normalizeTime24 = (t) => {
+  if (!t) return "";
+  const s = String(t).trim();
+  // Already HH:MM format
+  const m1 = s.match(/^([0-2]?\d):([0-5]\d)$/);
+  if (m1) {
+    const h = Math.max(0, Math.min(23, parseInt(m1[1], 10)));
+    const mm = m1[2];
+    return String(h).padStart(2, "0") + ":" + mm;
+  }
+  // H:MM AM/PM
+  const m2 = s.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/);
+  if (m2) {
+    let h = parseInt(m2[1], 10);
+    const mm = m2[2];
+    const ap = m2[3].toUpperCase();
+    if (ap === "PM" && h !== 12) h += 12;
+    if (ap === "AM" && h === 12) h = 0;
+    return String(h).padStart(2, "0") + ":" + mm;
+  }
+  // HHMM
+  const m3 = s.match(/^([0-2]?\d)([0-5]\d)$/);
+  if (m3) {
+    const h = Math.max(0, Math.min(23, parseInt(m3[1], 10)));
+    const mm = m3[2];
+    return String(h).padStart(2, "0") + ":" + mm;
+  }
+  return s;
+};
+const timeToNumber = (t) => {
+  const norm = normalizeTime24(t);
+  const hh = parseInt(norm.slice(0, 2), 10);
+  const mm = norm.slice(3, 5);
+  return hh + (mm === "30" ? 0.5 : 0);
+};
 const HOURS = Array.from({ length: 10 }, (_, i) => 8 + i); // 08 -> 17
 
 function buildHourMap(blocks) {
@@ -33,6 +81,7 @@ export default function Roomuse() {
   // Filters
   const [term, setTerm] = useState("");
   const [date, setDate] = useState("");
+  const [day, setDay] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [room, setRoom] = useState("");
@@ -67,22 +116,23 @@ export default function Roomuse() {
         // room_id, schedule_date (or date), start_time, end_time, subject, term, type
         const r = await fetch(`${API_BASE}/tb_schedule`);
         const data = await r.json();
+        const mapScheduleItem = (b) => ({
+          room: String(b.room ?? b.room_id ?? b.scd_room ?? ""),
+          // backend ส่ง day เป็น string (e.g., 'Monday') — เก็บไว้ใน date เพื่อแสดง/กรองรายวัน
+          date: b.date ?? b.day ?? b.scd_day ?? "",
+          start: normalizeTime24(b.start ?? b.start_time ?? ""),
+          end: normalizeTime24(b.end ?? b.end_time ?? ""),
+          subject: b.subject ?? b.subj_name ?? "",
+          term: b.term ?? b.scd_term ?? b.semester ?? "",
+          type: b.type ?? b.use_type ?? "teaching",
+        });
+
         const mapped = Array.isArray(data)
           ? data
-              .map((b) => ({
-                room: String(b.room ?? b.room_id ?? b.scd_room ?? ""),
-                // backend จะส่ง day เป็น string (e.g. 'Monday') — เก็บไว้ที่ date เพื่อแสดง/กรองรายวัน
-                date: b.date ?? b.day ?? b.scd_day ?? "",
-                start: b.start ?? "",
-                end: b.end ?? "",
-                type: b.type ?? b.use_type ?? "teaching",
-                subject: b.subject ?? b.subj_name ?? b.course_name ?? "",
-                term: b.term ?? b.scd_term ?? b.semester ?? "",
-                subject: b.subject ?? b.subj_name ?? "",
-                term: b.term ?? b.scd_term ?? "",
-              }))
+              .map(mapScheduleItem)
               .filter((x) => x.room && x.date && x.start && x.end)
           : [];
+
         setSchedules(mapped);
         setResults(mapped);
         const firstTerm = mapped.find((x) => x.term)?.term || "";
@@ -103,12 +153,13 @@ export default function Roomuse() {
   );
 
   const handleSearch = async () => {
+    const dayParam = day || isoDateToENday(date) || "";
     // Prefer server-side filtering to match actual DB columns
     const params = new URLSearchParams({
       term: term || "",
-      date: date || "",
-      startTime: startTime || "",
-      endTime: endTime || "",
+      date: dayParam,
+      startTime: normalizeTime24(startTime) || "",
+      endTime: normalizeTime24(endTime) || "",
       room: room || "",
       subject: subject || "",
     });
@@ -119,8 +170,8 @@ export default function Roomuse() {
         ? data.map((b) => ({
             room: String(b.room ?? b.room_id ?? b.roomId ?? ""),
             date: b.date ?? b.schedule_date ?? "",
-            start: b.start ?? b.start_time ?? "",
-            end: b.end ?? b.end_time ?? "",
+            start: normalizeTime24(b.start ?? b.start_time ?? ""),
+            end: normalizeTime24(b.end ?? b.end_time ?? ""),
             subject:
               b.subject ??
               [b.subj_id, b.subj_name].filter(Boolean).join(" ") ??
@@ -133,16 +184,17 @@ export default function Roomuse() {
     } catch {
       // Fallback to client-side filtering if server fails
       const base = schedules;
+      const selectedDay = dayParam;
       const next = base.filter((b) => {
         const byTerm = !term || !b.term || b.term === term;
-        const byDate = !date || b.date === date;
+        const byDate = !selectedDay || b.date === selectedDay;
         const byRoom = !room || b.room === room;
         const bySubject =
           !subject ||
           (b.subject ?? "").toLowerCase().includes(subject.toLowerCase());
         const byStart =
-          !startTime || timeToNumber(b.end) > timeToNumber(startTime);
-        const byEnd = !endTime || timeToNumber(b.start) < timeToNumber(endTime);
+          !startTime || timeToNumber(b.end) > timeToNumber(normalizeTime24(startTime));
+        const byEnd = !endTime || timeToNumber(b.start) < timeToNumber(normalizeTime24(endTime));
         return byTerm && byDate && byRoom && bySubject && byStart && byEnd;
       });
       setResults(next);
@@ -151,6 +203,7 @@ export default function Roomuse() {
 
   const handleClear = () => {
     setDate("");
+    setDay("");
     setStartTime("");
     setEndTime("");
     setRoom("");
@@ -160,16 +213,17 @@ export default function Roomuse() {
 
   // Group results by room for the grid
   const grouped = useMemo(() => {
+    const selectedDay = day || isoDateToENday(date) || "";
     const byRoom = new Map();
     for (const r of filteredRooms) byRoom.set(r.id, []);
     for (const b of results.filter(
       (b) =>
-        (!room ? true : b.room === room) && (!date ? true : b.date === date)
+        (!room ? true : b.room === room) && (!selectedDay ? true : b.date === selectedDay)
     )) {
       byRoom.get(b.room)?.push(b);
     }
     return byRoom;
-  }, [results, filteredRooms, room, date]);
+  }, [results, filteredRooms, room, date, day]);
 
   return (
     <>
@@ -205,6 +259,25 @@ export default function Roomuse() {
                 />
               </label>
 
+              {/* Day of week */}
+              <label className="form-control w-full">
+                <div className="label">
+                  <span className="label-text">Day</span>
+                </div>
+                <select
+                  className="select select-bordered text-white"
+                  value={day}
+                  onChange={(e) => setDay(e.target.value)}
+                >
+                  <option className="text-white" value="">All days</option>
+                  {DAYS.map((d) => (
+                    <option className="text-white" key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               {/* เวลาเริ่มต้น */}
               <label className="form-control w-full">
                 <div className="label">
@@ -212,9 +285,11 @@ export default function Roomuse() {
                 </div>
                 <input
                   type="time"
+                  lang="th-TH"
+                  step="1800"
                   className="input input-bordered text-white"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
+                  value={normalizeTime24(startTime)}
+                  onChange={(e) => setStartTime(normalizeTime24(e.target.value))}
                 />
               </label>
 
@@ -225,9 +300,11 @@ export default function Roomuse() {
                 </div>
                 <input
                   type="time"
+                  lang="th-TH"
+                  step="1800"
                   className="input input-bordered text-white"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
+                  value={normalizeTime24(endTime)}
+                  onChange={(e) => setEndTime(normalizeTime24(e.target.value))}
                 />
               </label>
 

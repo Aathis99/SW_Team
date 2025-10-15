@@ -41,7 +41,7 @@ app.get("/health", async (req, res) => {
   }
 });
 
-
+// subjects from tb_subject (เพิ่ม ลบ รายวิชา)
 app.get("/tb_subject", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM tb_subject");
@@ -111,6 +111,7 @@ app.delete("/tb_subject/:subj_id", async (req, res) => {
   }
 });
 
+// rooms from tb_room (แสดงการใช้ห้องทั้งหมด)
 app.get("/tb_room", async (req, res) => {
   try {
     let rows;
