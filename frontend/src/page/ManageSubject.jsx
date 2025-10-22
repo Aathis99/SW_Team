@@ -126,7 +126,7 @@ function ManageSubject() {
                     <td>{sub.subj_id}</td>
                     <td>{sub.subj_name}</td>
                     <td>{sub.subj_credit}</td>
-                    <td>({sub.subj_hoursee} ชม.)</td>
+                    <td>({sub.subj_hourse} ชม.)</td>
                     <td>
                       <button
                         onClick={() => handleDelete(sub.subj_id)}

@@ -415,7 +415,7 @@ export default function Roomuse() {
                                 </div>
                               ) : (
                                 <div className="text-xs opacity-50">
-                                  à¸§à¹ˆà¸²à¸‡
+                                  ว่าง
                                 </div>
                               )}
                             </td>
